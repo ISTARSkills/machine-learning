@@ -173,14 +173,19 @@ def make_cached_dimensions(org_id, prod_id):
         logger.info("Skipping caching of facet_signals for organization={} and product_id ={}, they already exist in RAM".format(org_id,prod_id))
 
 
+#Make the wraper method
+
 def wraper_method(input_file_path, org_id, product_id, threshold):
+    #first make combined snippets this is wrong
     vad_chunks = snippet_service.make_snippets(input_file_path)
-    if len(snippets) !=0:
+    if len(vad_chunks) !=0:
         try:
             make_cached_dimensions(org_id,product_id)
 
-        lead_qualification_vad_chunks =[]
-        for vad_chunk in vad_chunks:
-            if snippet_service.check_snippet_speaker(vad_chunk):
-                logger.info("Speaker =Agent for ")
+            lead_qualification_vad_chunks =[]
+            for vad_chunk in vad_chunks:
+                print("Have to work here")
+        except:
+            print("To do ")
+
 

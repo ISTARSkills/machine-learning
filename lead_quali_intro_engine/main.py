@@ -51,7 +51,7 @@ def upload_csv():
         logger.info("This is the first request for organization={} and product={}".format(org_id, product_id))
         tmp_pro_id = product_id
         request_count += 1
-        resp = Response(jsonpickle.encode(dimension_engine.wrapper_method(input_file_path, org_id, product_id, threshold)),
+        resp = Response(jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
                         mimetype='application/json')
         resp.headers['Access-Control-Allow-Origin'] = '*'
 
