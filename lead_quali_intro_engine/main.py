@@ -54,7 +54,7 @@ def upload_csv():
         logger.info("This is the first request for organization={} and product={}".format(org_id, product_id))
         tmp_pro_id = product_id
         request_count += 1
-        output_path= dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)
+        output_path = dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)
         return send_file(output_path, as_attachment=True)
 
     elif request != 0 and tmp_pro_id != product_id:
@@ -64,19 +64,14 @@ def upload_csv():
         dimension_engine.refresh_cached_dims(org_id, product_id)
         request_count = 1
         tmp_pro_id = product_id
-        resp = Response(
-            jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
-            mimetype='application/json')
-        resp.headers['Access-Control-Allow-Origin'] = '*'
+        output_path = dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)
+        return send_file(output_path, as_attachment=True)
 
     else:
         request_count += 1
         logger.info("This is {} request for  organization={} and product={}".format(request_count, org_id, tmp_pro_id))
-        resp = Response(
-            jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
-            mimetype='application/json')
-        resp.headers['Access-Control-Allow-Origin'] = '*'
-    return resp
+        output_path = dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)
+        return send_file(output_path, as_attachment=True)
 
 
 @app.route("/generate_paraphrase", methods=["POST", "GET"])
