@@ -1,10 +1,10 @@
 import os
 
 import jsonpickle
-from flask import Flask, request, Response, render_template, flash, redirect
+from flask import Flask, request, Response, render_template, flash, redirect, send_file
 from werkzeug.utils import secure_filename
 
-from src.utilities import sken_logger, db, sken_singleton,constants
+from src.utilities import sken_logger, db, sken_singleton, constants
 from src.services import dimension_engine
 from src.services import facet_service
 
@@ -16,6 +16,7 @@ tmp_pro_id = None  # used to catch and reset the catch if new product request is
 request_count = 0
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = constants.fetch_constant("upload_folder")
 
 
 @app.route('/')
@@ -40,7 +41,9 @@ def upload_csv():
             flash('No selected file')
             return redirect(request.url)
     input_filename = secure_filename(file.filename)
-    input_file_path = os.path.join(app.config[constants.fetch_constant("UPLOAD_FOLDER")], input_filename)
+    print("!!!!!!!!!!!!!!!!!!!!!!!")
+    print(input_filename)
+    input_file_path = os.path.join(app.config["UPLOAD_FOLDER"], input_filename)
     if os.path.exists(input_file_path):
         logger.info("File path {} already exists so removing this file".format(input_file_path))
         os.remove(input_file_path)
@@ -51,9 +54,8 @@ def upload_csv():
         logger.info("This is the first request for organization={} and product={}".format(org_id, product_id))
         tmp_pro_id = product_id
         request_count += 1
-        resp = Response(jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
-                        mimetype='application/json')
-        resp.headers['Access-Control-Allow-Origin'] = '*'
+        output_path= dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)
+        return send_file(output_path, as_attachment=True)
 
     elif request != 0 and tmp_pro_id != product_id:
         logger.info(
@@ -62,15 +64,17 @@ def upload_csv():
         dimension_engine.refresh_cached_dims(org_id, product_id)
         request_count = 1
         tmp_pro_id = product_id
-        resp = Response(jsonpickle.encode(dimension_engine.wrapper_method(input_file_path, org_id, threshold)),
-                        mimetype='application/json')
+        resp = Response(
+            jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
+            mimetype='application/json')
         resp.headers['Access-Control-Allow-Origin'] = '*'
 
     else:
         request_count += 1
         logger.info("This is {} request for  organization={} and product={}".format(request_count, org_id, tmp_pro_id))
-        resp = Response(jsonpickle.encode(dimension_engine.wrapper_method(input_file_path, org_id, threshold)),
-                        mimetype='application/json')
+        resp = Response(
+            jsonpickle.encode(dimension_engine.wraper_method(input_file_path, org_id, product_id, threshold)),
+            mimetype='application/json')
         resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 

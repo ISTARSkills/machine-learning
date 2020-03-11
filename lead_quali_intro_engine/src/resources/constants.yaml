@@ -17,4 +17,4 @@ language_depth: 10
 
 facet_names: [key value proposition,aspiration setting,need investigation,interest,budget,authority,]
 dimension_names: [Introduction,Lead-Qualification]
-UPLOAD_FOLDER: /tmp/
+upload_folder: /tmp/

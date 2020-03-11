@@ -283,19 +283,29 @@ keyframes ripple { 100% {
       <h1>Lead-Qauli-Intro-Engine</h1>
     </div>
 
-    <div align="right" style="padding-right: 50px;padding-top:50px">
-<!--        <input id="organization" type="text" name="organization" size="5" placeholder="org_id" >-->
-        <select id = "organization">
-               <option value = "1">Byju's</option>
-        </select>
-<!--        <input id="product_id" type="text" name="product_id" size="5" placeholder="pro_id" >-->
-        <select id = "product_id">
-            <option value = "149">Product_1</option>
-            <option value = "150">Product_2</option>
-        </select>
+<!--    <div align="right" style="padding-right: 50px;padding-top:50px">-->
+<!--&lt;!&ndash;        <input id="organization" type="text" name="organization" size="5" placeholder="org_id" >&ndash;&gt;-->
+<!--        <select id = "organization">-->
+<!--               <option value = "1">Byju's</option>-->
+<!--        </select>-->
+<!--&lt;!&ndash;        <input id="product_id" type="text" name="product_id" size="5" placeholder="pro_id" >&ndash;&gt;-->
+<!--        <select id = "product_id">-->
+<!--            <option value = "149">Product_1</option>-->
+<!--            <option value = "150">Product_2</option>-->
+<!--        </select>-->
+<!--        <input id="threshold" type="text" name="threshold" size="5" placeholder="threshold">-->
+<!--        <input id='fileid' type='file' name='file' onchange="check_values()" />-->
+<!--        <input type="submit" value="Upload"  id="upload_file" onclick="submit_form()"/>-->
+<!--    </div>-->
+<div align="right" style="padding-right: 50px;padding-top:50px">
+    <form id='formid' action="http://localhost:8080/upload_file" method="POST" enctype="multipart/form-data">
+        <input id="organization" type="text" name="organization" size="5" placeholder="org_id" >
+        <input id="product_id" type="text" name="product_id" size="5" placeholder="pro_id" >
         <input id="threshold" type="text" name="threshold" size="5" placeholder="threshold">
-        <input id='fileid' type='file' name='file' onchange="check_values()" />
-        <input type="submit" value="Upload"  id="upload_file" onclick="submit_form()"/>
-    </div>
+        <input id='fileid' type='file' name='file' onchange="check_threshold()" />
+        <input type="submit" value="Upload"  id="upload_file" />
+    </form>
+</div>
+
 </body>
 </html>

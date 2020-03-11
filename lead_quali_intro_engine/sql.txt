@@ -32,12 +32,12 @@ foreign key(facet_id) references facet(id) on delete cascade
 
 CREATE TABLE new_snippet (
 	id serial primary key,
-	from_time float8 NOT NULL,
-	to_time float8 NOT NULL,
+	from_time float8 ,
+	to_time float8 ,
 	confidence float8 NULL,
 	text_ varchar NOT NULL,
 	speaker varchar NOT NULL,
-	snippet_list varchar not null
+	snippet_list varchar
 )
 
 --drop table if exists caught_facets

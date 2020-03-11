@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
 from src.utilities.objects import VadChunk
-from src.utilities import sken_singleton, sken_logger
+from src.utilities import sken_singleton, sken_logger, constants
 from src.services import question_detection
 
 logger = sken_logger.get_logger("snippet_service")
@@ -8,7 +9,10 @@ logger = sken_logger.get_logger("snippet_service")
 
 def agent_customer_sequence(input_excel_file):
     df = pd.read_excel(input_excel_file)
-    df.text = df.text.astype(str)
+    print("!!!!!!!!!!!!!!!!!!!!!!")
+    print(input_excel_file)
+    print(df.columns)
+    df.text_ = df.text.astype(str)
     df['a_bin'] = 0
     df['b_bin'] = 0
     df.a_bin = df.speaker.apply(lambda x: 0 if x == 'Agent' else 1)
@@ -24,26 +28,26 @@ def agent_customer_sequence(input_excel_file):
     df['identifier'] = df.a_con + df.b_con
     df['name_idnet'] = df.speaker + "_" + df.identifier.astype(str)
     df.drop(['a_con', 'b_con'], axis=1, inplace=True)
-    df['text'] = df['text'] + " "
-    df1 = df[['name_idnet', 'text']].groupby(['name_idnet'], as_index=False).sum()
+    df['text_'] = df['text'] + ". "
+    df1 = df[['name_idnet', 'text_']].groupby(['name_idnet'], as_index=False).sum()
     df2 = df.drop_duplicates("name_idnet")[['speaker', 'name_idnet']]
     df2 = df2.merge(df1, on='name_idnet')
     df2 = df2.drop(["name_idnet"], axis=1)
-    df2['text'] = df2.text.apply(lambda x: x.strip())
+    df2['text_'] = df2.text_.apply(lambda x: x.strip("."))
     return df2
 
 
-def make_snippets(file_path):
-    df = pd.read_excel(file_path)
+def make_snippets(df, snippet_ids, task_id):
     if len(df) != 0:
         sentences = df["text_"].to_list()
         sentence_vectors = sken_singleton.Singletons.get_instance().perform_embeddings(sentences)
         vad_chunks = []
         for i in range(len(df)):
-            vad_chunks.append(VadChunk(df["id"][i], df["from_time"][i], df["to_time"][i], df["speaker"], df["text_"][i],
-                                       sentence_vectors[i], df["confidence"][i], questions=None,
-                                       q_encoding=None,
-                                       encoding_method=None))
+            vad_chunks.append(
+                VadChunk(snippet_ids[i], None, None, df["speaker"][i], df["text_"][i], np.array([sentence_vectors[i]]),
+                         None, task_id, questions=None,
+                         q_encoding=None,
+                         encoding_method=constants.fetch_constant("encoding_method")))
         return vad_chunks
     else:
         return []
@@ -81,8 +85,8 @@ def make_snippet_question_embeddings(vad_chunk):
     """
     if vad_chunk.questions is not None:
         vad_chunk.set_question_encoding(
-            sken_singleton.Singletons.get_instance().per(vad_chunk.questions),
-            constants.fetch_constant("embedding_method"))
+            sken_singleton.Singletons.get_instance().perform_embeddings(vad_chunk.questions),
+            constants.fetch_constant("encoding_method"))
         logger.info(
             "Calculated  embeddings for {} snippet questions for snippet_id ={}".format(
                 len(vad_chunk.questions),

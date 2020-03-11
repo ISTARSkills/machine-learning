@@ -1,7 +1,7 @@
 class VadChunk(object):
     """this class holds the incoming snippet text and stores the encoding of each snippet"""
 
-    def __init__(self, sid, from_time, to_time, speaker, text, text_encoding, confidence, questions=None,
+    def __init__(self, sid, from_time, to_time, speaker, text, text_encoding, confidence, task_id, questions=None,
                  q_encoding=None,
                  encoding_method=None):
         self.sid = sid
@@ -9,6 +9,7 @@ class VadChunk(object):
         self.to_time = to_time
         self.speaker = speaker
         self.text = text
+        self.task_id = task_id
         self.questions = questions
         self.confidence = confidence
         self.q_encoding = q_encoding
@@ -81,13 +82,26 @@ class Dimension(object):
         self.facets = facets
 
 
-class CaughtDimensions(object):
-    def __init__(self, cid, snippet, dimension, score, method):
-        self.cid = cid
+# class CaughtDimensions(object):
+#     def __init__(self, cid, snippet, dimension, score, method):
+#         self.snippet = snippet
+#         self.dimension = dimension
+#         self.score = score
+#         self.method = method
+#
+#     def set_id(self, cid):
+#         self.cid = cid
+
+
+class CaughtFacetSignals(object):
+    def __init__(self, snippet, snippet_text, snippet_question, facet_name, facet_signal, facet_signal_text, score,
+                 method, dimension):
         self.snippet = snippet
-        self.dimension = dimension
+        self.snippet_text = snippet_text
+        self.snippet_question = snippet_question
+        self.facet_name = facet_name
+        self.facet_signal = facet_signal
+        self.facet_signal_text = facet_signal_text
         self.score = score
         self.method = method
-
-    def set_id(self, cid):
-        self.cid = cid
+        self.dimension = dimension

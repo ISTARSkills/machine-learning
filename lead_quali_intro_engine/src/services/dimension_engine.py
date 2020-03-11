@@ -1,13 +1,18 @@
 import time
 
-from src.utilities import sken_singleton, sken_logger, constants,sken_exceptions
+import numpy as np
+
+from src.utilities import sken_singleton, sken_logger, constants, sken_exceptions
 import os
 import pandas
 from src.utilities.db import DBUtils
-from src.utilities.objects import FacetSignal, Facet
-from src.services import snippet_service
+from src.utilities.objects import FacetSignal, Facet, CaughtFacetSignals
+from src.services import snippet_service, facet_service
 
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing.pool import ThreadPool
+
+pool = ThreadPool(2)
 
 logger = sken_logger.get_logger("dimension_engine")
 
@@ -168,24 +173,69 @@ def make_cached_dimensions(org_id, prod_id):
 
         else:
             logger.info("No facet_signals found for organization={} and product={}".format(org_id, prod_id))
-            raise sken_exceptions.NoFacetFound(org_id,prod_id)
+            raise sken_exceptions.NoFacetFound(org_id, prod_id)
     else:
-        logger.info("Skipping caching of facet_signals for organization={} and product_id ={}, they already exist in RAM".format(org_id,prod_id))
+        logger.info(
+            "Skipping caching of facet_signals for organization={} and product_id ={}, they already exist in RAM".format(
+                org_id, prod_id))
 
-
-#Make the wraper method
 
 def wraper_method(input_file_path, org_id, product_id, threshold):
-    #first make combined snippets this is wrong
-    vad_chunks = snippet_service.make_snippets(input_file_path)
-    if len(vad_chunks) !=0:
+    df = snippet_service.agent_customer_sequence(input_file_path)
+    sql = "select max(task_id) as task_id from new_snippet"
+    rows, col_names = DBUtils.get_instance().execute_query(sql, (), is_write=False, is_return=True)
+    task_id = rows[0][col_names.index("task_id")]
+    if task_id is None:
+        task_id = 1
+    else:
+        task_id = int(task_id) + 1
+
+    logger.info("Making new_snippet entries in the database")
+    data = []
+    for i in range(len(df)):
+        data.append(tuple([0, 0, 0, df["text_"][i], df["speaker"][i], None, task_id]))
+    snippet_ids = DBUtils.get_instance().insert_bulk("new_snippet", "from_time, to_time, confidence, text_, speaker, "
+                                                                    "snippet_list,task_id", data, return_parameter=[
+        "id"])
+    vad_chunks = snippet_service.make_snippets(df, snippet_ids, task_id)
+    if len(vad_chunks) != 0:
         try:
-            make_cached_dimensions(org_id,product_id)
-
-            lead_qualification_vad_chunks =[]
+            make_cached_dimensions(org_id, product_id)
             for vad_chunk in vad_chunks:
-                print("Have to work here")
-        except:
-            print("To do ")
+                snippet_service.find_snippet_questions(vad_chunk)
+                snippet_service.make_snippet_question_embeddings(vad_chunk)
+            with ThreadPoolExecutor(max_workers=2) as executore:
+                caught_intro_facets = executore.submit(facet_service.create_intro_matches, vad_chunks,
+                                                       threshold).result()
+                caught_lq_facets = executore.submit(facet_service.create_lq_maches, vad_chunks, threshold).result()
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                lq_result, lq_count = executor.submit(facet_service.make_result_lq, caught_lq_facets, org_id,
+                                                      product_id).result()
+                intro_result, intro_count = executor.submit(facet_service.make_result_intro, caught_intro_facets,
+                                                            org_id, product_id).result()
+            for item in lq_result:
+                sql = "INSERT INTO public.caught_facets (new_snippet_id, snippet_text, fact_signal_id, " \
+                      "facet_signal_text, facet_name, dimension_name,score) VALUES(%s, %s, %s, %s, %s, %s,%s); "
+                DBUtils.get_instance().execute_query(sql, (
+                    item["Snippet_id"], item["Snippet_text"], item["Facet_Signal_id"], item["Face_Signal_text"],
+                    item["Facet"], item["Dimension"], item["Score"]), is_write=True, is_return=False)
+            for item in intro_result:
+                sql = "INSERT INTO public.caught_facets (new_snippet_id, snippet_text, fact_signal_id, " \
+                      "facet_signal_text, facet_name, dimension_name,score) VALUES(%s, %s, %s, %s, %s, %s,%s); "
+                DBUtils.get_instance().execute_query(sql, (
+                    item["Snippet_id"], item["Snippet_text"], item["Facet_Signal_id"], item["Face_Signal_text"],
+                    item["Facet"], item["Dimension"], item["Score"]), is_write=True, is_return=False)
+            logger.info("Made entries for caught facets")
+            output_path = facet_service.make_combined_result(intro_result,
+                                                                                                 intro_count, lq_result,
+                                                                                                 lq_count,
+                                                                                                 task_id,
+                                                                                                 input_file_path)
+            return output_path
+
+        except sken_exceptions.NoFacetFound as e:
+            print(e.message)
 
 
+if __name__ == '__main__':
+    wraper_method("/home/andy/Downloads/snippets_test.xlsx", 1, 150, 0.7)
