@@ -1,6 +1,6 @@
 #please comment one of the embedders in the sken_singleton file or you will be fucked
 
-host: 192.168.1.42
+host: 192.168.1.17
 password: root
 db_name: sales
 min_pool: 5

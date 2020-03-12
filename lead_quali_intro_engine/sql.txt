@@ -37,7 +37,8 @@ CREATE TABLE new_snippet (
 	confidence float8 NULL,
 	text_ varchar NOT NULL,
 	speaker varchar NOT NULL,
-	snippet_list varchar
+	snippet_list varchar,
+	task_id int
 )
 
 --drop table if exists caught_facets
@@ -50,6 +51,7 @@ fact_signal_id int not null,
 facet_signal_text varchar,
 facet_name varchar,
 dimension_name varchar,
+score float,
 foreign key (new_snippet_id) references new_snippet(id) on delete cascade,
 foreign key (fact_signal_id) references facet_signal(id) on delete cascade
 )
