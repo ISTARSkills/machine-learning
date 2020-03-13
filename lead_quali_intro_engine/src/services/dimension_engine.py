@@ -192,11 +192,12 @@ def wraper_method(input_file_path, org_id, product_id, threshold):
 
     logger.info("Making new_snippet entries in the database")
     data = []
-    for i in range(len(df)):
-        data.append(tuple([0, 0, 0, df["text_"][i], df["speaker"][i], None, task_id]))
-    snippet_ids = DBUtils.get_instance().insert_bulk("new_snippet", "from_time, to_time, confidence, text_, speaker, "
-                                                                    "snippet_list,task_id", data, return_parameter=[
-        "id"])
+    if len(df) != 0:
+        for i in range(len(df)):
+            data.append(tuple([df["from_time"][i], df["to_time"][i], 0, df["text"][i], df["speaker"][i], str(df["orignal_ids"][i]), task_id]))
+        snippet_ids = DBUtils.get_instance().insert_bulk("new_snippet", "from_time, to_time, confidence, text_, speaker, "
+                                                                        "snippet_list,task_id", data, return_parameter=[
+            "id"])
     vad_chunks = snippet_service.make_snippets(df, snippet_ids, task_id)
     if len(vad_chunks) != 0:
         try:

@@ -1,7 +1,7 @@
 class VadChunk(object):
     """this class holds the incoming snippet text and stores the encoding of each snippet"""
 
-    def __init__(self, sid, from_time, to_time, speaker, text, text_encoding, confidence, task_id, questions=None,
+    def __init__(self, sid, from_time, to_time, speaker, text, text_encoding, confidence, task_id,old_snippet_list,questions=None,
                  q_encoding=None,
                  encoding_method=None):
         self.sid = sid
@@ -10,6 +10,7 @@ class VadChunk(object):
         self.speaker = speaker
         self.text = text
         self.task_id = task_id
+        self.old_snippet_list = old_snippet_list
         self.questions = questions
         self.confidence = confidence
         self.q_encoding = q_encoding
