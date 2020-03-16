@@ -7,31 +7,31 @@ from src.services import question_detection
 logger = sken_logger.get_logger("snippet_service")
 
 
-def agent_customer_sequence(input_excel_file):
-    df = pd.read_excel(input_excel_file)
-    df.text_ = df.text.astype(str)
-    df['a_bin'] = 0
-    df['b_bin'] = 0
-    df.a_bin = df.speaker.apply(lambda x: 0 if x == 'Agent' else 1)
-    df.b_bin = df.speaker.apply(lambda x: 0 if x == 'Customer' else 1)
-    df['a_bin_cumsum'] = df.a_bin.cumsum()
-    df['b_bin_cumsum'] = df.b_bin.cumsum()
-    df = df.drop(['a_bin', 'b_bin'], axis=1)
-    df['a_bin'] = df.speaker.apply(lambda x: 1 if x == 'Agent' else 0)
-    df['b_bin'] = df.speaker.apply(lambda x: 1 if x == 'Customer' else 0)
-    df['a_con'] = df.a_bin_cumsum * df.a_bin
-    df['b_con'] = df.b_bin_cumsum * df.b_bin
-    df.drop(['a_bin_cumsum', 'b_bin_cumsum', 'a_bin', 'b_bin'], axis=1, inplace=True)
-    df['identifier'] = df.a_con + df.b_con
-    df['name_idnet'] = df.speaker + "_" + df.identifier.astype(str)
-    df.drop(['a_con', 'b_con'], axis=1, inplace=True)
-    df['text_'] = df['text'] + ". "
-    df1 = df[['name_idnet', 'text_']].groupby(['name_idnet'], as_index=False).sum()
-    df2 = df.drop_duplicates("name_idnet")[['speaker', 'name_idnet']]
-    df2 = df2.merge(df1, on='name_idnet')
-    df2 = df2.drop(["name_idnet"], axis=1)
-    df2['text_'] = df2.text_.apply(lambda x: x.strip("."))
-    return df2
+# def agent_customer_sequence(input_excel_file):
+#     df = pd.read_excel(input_excel_file)
+#     df.text_ = df.text.astype(str)
+#     df['a_bin'] = 0
+#     df['b_bin'] = 0
+#     df.a_bin = df.speaker.apply(lambda x: 0 if x == 'Agent' else 1)
+#     df.b_bin = df.speaker.apply(lambda x: 0 if x == 'Customer' else 1)
+#     df['a_bin_cumsum'] = df.a_bin.cumsum()
+#     df['b_bin_cumsum'] = df.b_bin.cumsum()
+#     df = df.drop(['a_bin', 'b_bin'], axis=1)
+#     df['a_bin'] = df.speaker.apply(lambda x: 1 if x == 'Agent' else 0)
+#     df['b_bin'] = df.speaker.apply(lambda x: 1 if x == 'Customer' else 0)
+#     df['a_con'] = df.a_bin_cumsum * df.a_bin
+#     df['b_con'] = df.b_bin_cumsum * df.b_bin
+#     df.drop(['a_bin_cumsum', 'b_bin_cumsum', 'a_bin', 'b_bin'], axis=1, inplace=True)
+#     df['identifier'] = df.a_con + df.b_con
+#     df['name_idnet'] = df.speaker + "_" + df.identifier.astype(str)
+#     df.drop(['a_con', 'b_con'], axis=1, inplace=True)
+#     df['text_'] = df['text'] + ". "
+#     df1 = df[['name_idnet', 'text_']].groupby(['name_idnet'], as_index=False).sum()
+#     df2 = df.drop_duplicates("name_idnet")[['speaker', 'name_idnet']]
+#     df2 = df2.merge(df1, on='name_idnet')
+#     df2 = df2.drop(["name_idnet"], axis=1)
+#     df2['text_'] = df2.text_.apply(lambda x: x.strip("."))
+#     return df2
 
 
 # def agent_customer_sequence(input_excel_file):
@@ -78,31 +78,32 @@ def agent_customer_sequence(input_excel_file):
 #     df_result = df_result.drop(['name_idnet', 'nindx'], axis=1)
 #     df_result = df_result[['id', 'speaker', 'text', 'from_time', 'to_time']]
 #     return df_result
-# def agent_customer_sequence(input_excel_file):
-#     cached_snippets = []
-#     df = pd.read_excel(input_excel_file)
-#     if len(df) != 0:
-#         logger.info("Making new snippets for {} snippets".format(len(df)))
-#         for i in range(len(df)):
-#             if len(cached_snippets) == 0:
-#                 cached_snippets.append({"orignal_ids": [df["id"][i]], "speaker": df["speaker"][i], "text": df["text"][i],
-#                                         "from_time": df["from_time"][i], "to_time": df["to_time"][i],
-#                                         "task_id": df["task_id"][i]})
-#             else:
-#                 if df["speaker"][i] == cached_snippets[-1]['speaker']:
-#                     cached_snippets[-1]["orignal_ids"].append(df["id"][i])
-#                     cached_snippets[-1]["text"] += ". " + df["text"][i]
-#                     cached_snippets[-1]["to_time"] = df["to_time"][i]
-#                     cached_snippets[-1]["task_id"] = df["task_id"][i]
-#                 else:
-#                     cached_snippets.append(
-#                         {"orignal_ids": [df["id"][i]], "speaker": df["speaker"][i], "text": df["text"][i],
-#                          "from_time": df["from_time"][i], "to_time": df["to_time"][i], "task_id": df["task_id"][i]})
-#         new_snippets_df = pd.DataFrame(cached_snippets)
-#         logger.info("Made {} new snippets from {} old snippets".format(len(new_snippets_df),len(df)))
-#         return new_snippets_df
-#     else:
-#         return []
+
+def agent_customer_sequence(input_excel_file):
+    cached_snippets = []
+    df = pd.read_excel(input_excel_file)
+    if len(df) != 0:
+        logger.info("Making new snippets for {} snippets".format(len(df)))
+        for i in range(len(df)):
+            if len(cached_snippets) == 0:
+                cached_snippets.append({"orignal_ids": [df["id"][i]], "speaker": df["speaker"][i], "text": df["text"][i],
+                                        "from_time": df["from_time"][i], "to_time": df["to_time"][i],
+                                        "task_id": df["task_id"][i]})
+            else:
+                if df["speaker"][i] == cached_snippets[-1]['speaker']:
+                    cached_snippets[-1]["orignal_ids"].append(df["id"][i])
+                    cached_snippets[-1]["text"] += ". " + df["text"][i]
+                    cached_snippets[-1]["to_time"] = df["to_time"][i]
+                    cached_snippets[-1]["task_id"] = df["task_id"][i]
+                else:
+                    cached_snippets.append(
+                        {"orignal_ids": [df["id"][i]], "speaker": df["speaker"][i], "text": df["text"][i],
+                         "from_time": df["from_time"][i], "to_time": df["to_time"][i], "task_id": df["task_id"][i]})
+        new_snippets_df = pd.DataFrame(cached_snippets)
+        logger.info("Made {} new snippets from {} old snippets".format(len(new_snippets_df),len(df)))
+        return new_snippets_df
+    else:
+        return []
 
 
 def make_snippets(df, snippet_ids, task_id):
@@ -112,10 +113,10 @@ def make_snippets(df, snippet_ids, task_id):
         vad_chunks = []
         for i in range(len(df)):
             vad_chunks.append(
-                VadChunk(snippet_ids[i], None, None, df["speaker"][i], df["text_"][i], np.array([sentence_vectors[i]]),
-                         None, task_id, questions=None,
-                         q_encoding=None,
-                         encoding_method=constants.fetch_constant("encoding_method")))
+                VadChunk( snippet_ids[i], df["from_time"][i], df["to_time"][i], df["speaker"][i], df["text"][i], sentence_vectors[i], None, task_id, df["orignal_ids"][i],
+                 questions=None,
+                 q_encoding=None,
+                 encoding_method=constants.fetch_constant("encoding_method")))
 
         return vad_chunks
     else:

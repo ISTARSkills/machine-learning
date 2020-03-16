@@ -194,10 +194,13 @@ def wraper_method(input_file_path, org_id, product_id, threshold):
     data = []
     if len(df) != 0:
         for i in range(len(df)):
-            data.append(tuple([df["from_time"][i], df["to_time"][i], 0, df["text"][i], df["speaker"][i], str(df["orignal_ids"][i]), task_id]))
-        snippet_ids = DBUtils.get_instance().insert_bulk("new_snippet", "from_time, to_time, confidence, text_, speaker, "
-                                                                        "snippet_list,task_id", data, return_parameter=[
-            "id"])
+            data.append(tuple(
+                [df["from_time"][i], df["to_time"][i], 0, df["text"][i], df["speaker"][i], str(df["orignal_ids"][i]),
+                 task_id]))
+        snippet_ids = DBUtils.get_instance().insert_bulk("new_snippet",
+                                                         "from_time, to_time, confidence, text_, speaker, "
+                                                         "snippet_list,task_id", data, return_parameter=[
+                "id"])
     vad_chunks = snippet_service.make_snippets(df, snippet_ids, task_id)
     if len(vad_chunks) != 0:
         try:
@@ -228,10 +231,10 @@ def wraper_method(input_file_path, org_id, product_id, threshold):
                     item["Facet"], item["Dimension"], item["Score"]), is_write=True, is_return=False)
             logger.info("Made entries for caught facets")
             output_path = facet_service.make_combined_result(intro_result,
-                                                                                                 intro_count, lq_result,
-                                                                                                 lq_count,
-                                                                                                 task_id,
-                                                                                                 input_file_path)
+                                                             intro_count, lq_result,
+                                                             lq_count,
+                                                             task_id,
+                                                             input_file_path)
             return output_path
 
         except sken_exceptions.NoFacetFound as e:
